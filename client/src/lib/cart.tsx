@@ -2,14 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import type { Product } from "@shared/schema";
 
 export interface CartItem extends Product {
+  _id: string;          // ✅ MongoDB ID
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (product: Product) => void;
-  removeItem: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  addItem: (product: Product & { _id: string; quantity?: number }) => void;
+  removeItem: (_id: string) => void;
+  updateQuantity: (_id: string, quantity: number) => void;
   clearCart: () => void;
   total: number;
   isOpen: boolean;
@@ -22,7 +23,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Load from local storage
+  /* ---------------- LOAD CART ---------------- */
   useEffect(() => {
     const saved = localStorage.getItem("cart");
     if (saved) {
@@ -34,46 +35,64 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Save to local storage
+  /* ---------------- SAVE CART ---------------- */
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
 
-  const addItem = (product: Product) => {
+  /* ---------------- ADD ITEM ---------------- */
+  const addItem = (product: Product & { _id: string; quantity?: number }) => {
     setItems((current) => {
-      const existing = current.find((item) => item.id === product.id);
+      const existing = current.find((item) => item._id === product._id);
+
       if (existing) {
         return current.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+          item._id === product._id
+            ? {
+                ...item,
+                quantity: item.quantity + (product.quantity || 1),
+              }
             : item
         );
       }
-      return [...current, { ...product, quantity: 1 }];
+
+      return [
+        ...current,
+        {
+          ...product,
+          quantity: product.quantity || 1,
+        } as CartItem,
+      ];
     });
+
     setIsOpen(true);
   };
 
-  const removeItem = (productId: number) => {
-    setItems((current) => current.filter((item) => item.id !== productId));
+  /* ---------------- REMOVE ITEM ---------------- */
+  const removeItem = (_id: string) => {
+    setItems((current) => current.filter((item) => item._id !== _id));
   };
 
-  const updateQuantity = (productId: number, quantity: number) => {
+  /* ---------------- UPDATE QTY ---------------- */
+  const updateQuantity = (_id: string, quantity: number) => {
     if (quantity < 1) {
-      removeItem(productId);
+      removeItem(_id);
       return;
     }
+
     setItems((current) =>
       current.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item._id === _id ? { ...item, quantity } : item
       )
     );
   };
 
+  /* ---------------- CLEAR CART ---------------- */
   const clearCart = () => setItems([]);
 
+  /* ---------------- TOTAL ---------------- */
   const total = items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
+    (sum, item) => sum + Number(item.price || 0) * item.quantity,
     0
   );
 

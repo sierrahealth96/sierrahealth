@@ -11,26 +11,40 @@ import {
   X,
   ImagePlus
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef  } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { BASE_URL } from "@/Url";
 
-const PRODUCT_API = "http://localhost:5000/api/products/add";
-const CATEGORY_API = "http://localhost:5000/api/categories/get/all";
+const PRODUCT_API = `${BASE_URL}/api/products/add`;
+const CATEGORY_API = `${BASE_URL}/api/categories/get/all`;
+const UPLOAD_IMAGE_API = `${BASE_URL}/api/products/upload-image`;
+const DELETE_IMAGE_API = `${BASE_URL}/api/products/delete-image`;
 
 type Category = {
   _id: string;
   name: string;
 };
 
+type UploadedImage = {
+  url: string;
+  public_id: string;
+};
+
 export default function AddProductForm() {
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement | null>(null);
 
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<UploadedImage[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ✅ NEW (image upload loader)
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const isImageUploading = uploadingCount > 0;
 
   /* -----------------------------
      FETCH CATEGORIES
@@ -49,13 +63,25 @@ export default function AddProductForm() {
   }, []);
 
   /* -----------------------------
-     IMAGE HANDLING
+     IMAGE UPLOAD (Cloudinary)
   ----------------------------- */
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = Array.from(e.target.files || []);
-    const updatedImages = [...images, ...newFiles];
+  const uploadSingleImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
 
-    if (updatedImages.length > 6) {
+    const res = await fetch(UPLOAD_IMAGE_API, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) throw new Error("Upload failed");
+    return res.json();
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+
+    if (images.length + newFiles.length > 6) {
       toast({
         title: "Image limit exceeded",
         description: "Maximum 6 images allowed",
@@ -64,20 +90,52 @@ export default function AddProductForm() {
       return;
     }
 
-    setImages(updatedImages);
+    setUploadingCount(prev => prev + newFiles.length);
 
-    newFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        setImagePreviews(prev => [...prev, e.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of newFiles) {
+      try {
+        const uploaded = await uploadSingleImage(file);
+        setImages(prev => [...prev, uploaded]);
+
+        const reader = new FileReader();
+        reader.onload = e => {
+          setImagePreviews(prev => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      } catch {
+        toast({
+          title: "Image upload failed",
+          variant: "destructive"
+        });
+      } finally {
+        setUploadingCount(prev => prev - 1);
+      }
+    }
   };
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  /* -----------------------------
+     IMAGE DELETE (Cloudinary)
+  ----------------------------- */
+  const removeImage = async (index: number) => {
+    const img = images[index];
+
+    try {
+      await fetch(DELETE_IMAGE_API, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ public_id: img.public_id })
+      });
+
+      setImages(prev => prev.filter((_, i) => i !== index));
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+
+      toast({ title: "Image removed" });
+    } catch {
+      toast({
+        title: "Failed to delete image",
+        variant: "destructive"
+      });
+    }
   };
 
   /* -----------------------------
@@ -85,6 +143,14 @@ export default function AddProductForm() {
   ----------------------------- */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (isImageUploading) {
+      toast({
+        title: "Please wait",
+        description: "Images are still uploading"
+      });
+      return;
+    }
 
     if (!selectedCategory) {
       toast({
@@ -108,15 +174,20 @@ export default function AddProductForm() {
 
     try {
       const formData = new FormData(e.currentTarget);
-      formData.append("category", selectedCategory);
 
-      images.forEach(img => {
-        formData.append("images", img);
-      });
+      const payload = {
+        name: formData.get("name"),
+        brand: formData.get("brand"),
+        price: formData.get("price"),
+        description: formData.get("description"),
+        category: selectedCategory,
+        images: images.map(img => img.url)
+      };
 
       const res = await fetch(PRODUCT_API, {
         method: "POST",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) throw new Error("Product creation failed");
@@ -126,7 +197,7 @@ export default function AddProductForm() {
         description: `${images.length} image(s) uploaded`
       });
 
-      e.currentTarget.reset();
+      formRef.current?.reset();
       setImages([]);
       setImagePreviews([]);
       setSelectedCategory("");
@@ -158,7 +229,7 @@ export default function AddProductForm() {
           Add New Product
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form  ref={formRef} onSubmit={handleSubmit} className="space-y-8">
           {/* BASIC INFO */}
           <div className="grid md:grid-cols-2 gap-6">
             {formFields.map(field => {
@@ -215,15 +286,22 @@ export default function AddProductForm() {
           </div>
 
           {/* IMAGE UPLOAD */}
-          <div>
+          <div className="relative">
             <label className="flex items-center gap-2 mb-4 font-semibold text-sm">
               <ImagePlus className="w-5 h-5" /> PRODUCT IMAGES (MAX 6)
             </label>
 
-            <label className="block w-full h-20 border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer">
+            <label className="block w-full h-20 border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer relative">
               <Upload className="mx-auto mb-2" />
-              Click to upload images
-              <input type="file" accept="image/*" multiple hidden onChange={handleImageChange} />
+              {isImageUploading ? "Uploading images..." : "Click to upload images"}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={handleImageChange}
+                disabled={isImageUploading}
+              />
             </label>
 
             <AnimatePresence>
@@ -236,6 +314,7 @@ export default function AddProductForm() {
                         type="button"
                         onClick={() => removeImage(i)}
                         className="absolute top-2 right-2 bg-white p-1 rounded-full"
+                        disabled={isImageUploading}
                       >
                         <X className="w-4 h-4 text-destructive" />
                       </button>
@@ -249,7 +328,7 @@ export default function AddProductForm() {
           {/* SUBMIT */}
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isImageUploading}
             className="w-full h-16 text-xl font-black bg-gradient-to-r from-emerald-500 to-teal-600"
           >
             <Package className="w-6 h-6 mr-3" />

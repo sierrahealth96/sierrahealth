@@ -1,5 +1,7 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config(); // ✅ MUST be first
+
+import express from "express";
 import cors from "cors";
 import connectDB from "./db/db.js";
 
@@ -8,7 +10,6 @@ import orderRoute from "./routes/orderRoute.js";
 import categoryRoute from "./routes/categoryRoute.js";
 import crmRoute from "./routes/crmRoute.js";
 
-dotenv.config();
 connectDB();
 
 const app = express();

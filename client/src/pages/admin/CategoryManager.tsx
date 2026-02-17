@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Pencil, Save, X, Plus, Tag, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { BASE_URL } from "@/Url";
 
-const API_BASE = "http://localhost:5000/api/categories";
+const API_BASE = `${BASE_URL}/api/categories`;
 
 type Category = {
   _id: string;

@@ -1,34 +1,73 @@
+// services/emailSend.js
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS
+    user: "sierrahealth96@gmail.com",
+    pass: "snyrzxiwuypwpxbr"
   }
 });
 
-export const sendOrderEmail = async ({ to, name, products }) => {
+/* ---------- ADMIN ---------- */
+export const sendOrderEmailToAdmin = async ({
+  adminEmail,
+  name,
+  email,
+  phone,
+  products,
+  message
+}) => {
   const productList =
-    products?.length > 0
-      ? products.map(p => `• ${p.productName} (Qty: ${p.quantity})`).join("\n")
+    products.length > 0
+      ? products.map(p => `• ${p.name} (Qty: ${p.quantity})`).join("\n")
       : "No products selected";
 
   await transporter.sendMail({
-    from: `"Medical Equipment" <${process.env.EMAIL}>`,
-    to,
-    subject: "Thanks for reaching out",
-    text: `Hi ${name},
-
-Thank you for contacting us.
-We have received your inquiry.
+    from: `"Website Lead" <${adminEmail}>`,
+    to: adminEmail,
+    subject: "New Product Inquiry",
+    text: `
+Name: ${name}
+Email: ${email}
+Phone: ${phone}
 
 Products:
 ${productList}
 
-Our team will get back to you shortly.
+Message:
+${message || "N/A"}
+`
+  });
+};
 
-Regards,
-Medical Equipment Team`
+/* ---------- USER ---------- */
+export const sendOrderEmailToUser = async ({
+  to,
+  name,
+  phone,
+  products
+}) => {
+  const productList =
+    products.length > 0
+      ? products.map(p => `• ${p.name} (Qty: ${p.quantity})`).join("\n")
+      : "No products selected";
+
+  await transporter.sendMail({
+    from: `"Medical Equipment" <sierrahealth96@gmail.com>`,
+    to,
+    subject: "Thanks for contacting us",
+    text: `
+Hi ${name},
+
+We received your inquiry.
+
+Phone: ${phone}
+
+Products:
+${productList}
+
+Our team will contact you shortly.
+`
   });
 };

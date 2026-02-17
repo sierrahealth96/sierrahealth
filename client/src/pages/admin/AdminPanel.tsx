@@ -6,15 +6,61 @@ import { Bell, Package, Settings, MessageCircle, Users, TrendingUp } from "lucid
 import QueriesPanel from "./QueriesPanel";
 import AddProductForm from "./AddProductForm";
 import CategoryManager from "./CategoryManager";
+import { useEffect, useState } from "react";
+import { BASE_URL } from "@/Url";
 
-const stats = [
-  { value: "2", label: "New Queries", icon: MessageCircle, color: "from-blue-500 to-indigo-600" },
-  { value: "15", label: "Products", icon: Package, color: "from-emerald-500 to-teal-600" },
-  { value: "5", label: "Categories", icon: Settings, color: "from-purple-500 to-violet-600" },
-  { value: "+12%", label: "This Month", icon: TrendingUp, color: "from-orange-500 to-amber-600" }
-];
+const CRM_API = `${BASE_URL}/api/crm/crm/admin`;
+ 
 
 export default function AdminPanel() {
+
+  const [stats, setStats] = useState([
+  { value: "0", label: "New Queries", icon: MessageCircle, color: "from-blue-500 to-indigo-600" },
+  { value: "0", label: "Products", icon: Package, color: "from-emerald-500 to-teal-600" },
+  { value: "0", label: "Categories", icon: Settings, color: "from-purple-500 to-violet-600" },
+  { value: "0", label: "Users", icon: Users, color: "from-orange-500 to-amber-600" }
+]);
+
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(CRM_API);
+      const data = await res.json();
+
+      setStats([
+        {
+          value: String(data.totalOrders),
+          label: "New Queries",
+          icon: MessageCircle,
+          color: "from-blue-500 to-indigo-600"
+        },
+        {
+          value: String(data.totalProducts),
+          label: "Products",
+          icon: Package,
+          color: "from-emerald-500 to-teal-600"
+        },
+        {
+          value: String(data.totalCategories),
+          label: "Categories",
+          icon: Settings,
+          color: "from-purple-500 to-violet-600"
+        },
+        {
+          value: String(data.totalUsers),
+          label: "Users",
+          icon: Users,
+          color: "from-orange-500 to-amber-600"
+        }
+      ]);
+    } catch (err) {
+      console.error("Failed to load CRM stats", err);
+    }
+  };
+
+  fetchStats();
+}, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-background to-slate-100">
       {/* <Navbar /> */}

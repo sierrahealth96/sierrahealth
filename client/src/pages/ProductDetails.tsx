@@ -1,22 +1,99 @@
 import { useParams, Link } from "wouter";
-import { products } from "@/data/products";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Star, ShoppingCart, Eye, Shield, Truck, Award, ChevronLeft,Package } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Star, ShoppingCart, Eye, Shield, Truck, Award, ChevronLeft, Package } from "lucide-react";
+import { motion } from "framer-motion";
 import { useCart } from "@/lib/cart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { BASE_URL } from "@/Url";
+
+const PRODUCT_DETAILS = `${BASE_URL}/api/products/get/details/`;
+const PRODUCT_BY_CATEGORY = `${BASE_URL}/api/products/get/by-category/`;
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const product = products.find(p => p.id === Number(id));
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [currentImage, setCurrentImage] = useState(0);
+  const [product, setProduct] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!product) {
+  // Fetch product details
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`${PRODUCT_DETAILS}${id}`);
+        if (!response.ok) {
+          throw new Error("Product not found");
+        }
+        
+        const productData = await response.json();
+        setProduct(productData);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, [id]);
+
+  // Fetch similar products after product details load
+useEffect(() => {
+  const fetchSimilarProducts = async () => {
+    if (!product?.category?._id || !id) return;
+
+    try {
+      const response = await fetch(
+        `${PRODUCT_BY_CATEGORY}${product.category._id}?exclude=${id}`
+      );
+
+      if (!response.ok) throw new Error("Failed to load similar products");
+
+      const data = await response.json();
+      setSimilarProducts(data.slice(0, 3)); // already excluded
+    } catch (err) {
+      console.error("Failed to fetch similar products:", err);
+      setSimilarProducts([]);
+    }
+  };
+
+  fetchSimilarProducts();
+}, [product, id]);
+
+  const galleryImages = product?.images || [];
+
+  const specs = [
+    { label: "Brand", value: product?.brand || "N/A", icon: Award },
+    { label: "Category", value: product?.category?.name || "N/A", icon: Star },
+    { label: "Warranty", value: "2 Years", icon: Shield },
+    { label: "Installation", value: "Pan India", icon: Truck },
+    { label: "Training", value: "Included", icon: Eye },
+    { label: "Service", value: "24/7 Support", icon: Shield }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-8"></div>
+          <p className="text-xl text-muted-foreground">Loading product details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen pt-32 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <motion.div 
@@ -27,7 +104,7 @@ export default function ProductDetails() {
           <div className="w-32 h-32 bg-gradient-to-br from-muted/30 to-muted mx-auto rounded-3xl flex items-center justify-center mb-8 shadow-2xl">
             <Eye className="w-16 h-16 text-muted-foreground" />
           </div>
-          <h2 className="text-3xl font-black mb-4 text-muted-foreground">Product Not Found</h2>
+          <h2 className="text-3xl font-black mb-4 text-muted-foreground">{error || "Product Not Found"}</h2>
           <p className="text-lg text-muted-foreground mb-8">The product you're looking for doesn't exist.</p>
           <Link href="/products">
             <Button size="lg" className="px-8 h-14 text-lg font-bold shadow-xl">
@@ -39,25 +116,6 @@ export default function ProductDetails() {
       </div>
     );
   }
-
-  const similarProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 3);
-
-  const galleryImages = [
-    product.imageUrl,
-    "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1400",
-    "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1400"
-  ];
-
-  const specs = [
-    { label: "Brand", value: product.brand, icon: Award },
-    { label: "Category", value: product.category, icon: Star },
-    { label: "Warranty", value: "2 Years", icon: Shield },
-    { label: "Installation", value: "Pan India", icon: Truck },
-    { label: "Training", value: "Included", icon: Eye },
-    { label: "Service", value: "24/7 Support", icon: Shield }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50/50">
@@ -90,7 +148,7 @@ export default function ProductDetails() {
                 className="bg-white/80 backdrop-blur-xl rounded-4xl shadow-2xl p-8 border border-white/50 group hover:shadow-3xl transition-all duration-500 overflow-hidden"
               >
                 <img
-                  src={galleryImages[currentImage]}
+                  src={galleryImages[currentImage] || galleryImages[0]}
                   alt={product.name}
                   className="w-full h-[500px] lg:h-[600px] object-contain mx-auto group-hover:scale-105 transition-transform duration-1000"
                 />
@@ -99,30 +157,32 @@ export default function ProductDetails() {
               </motion.div>
 
               {/* Thumbnails */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3 mt-6 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
-              >
-                {galleryImages.map((img, i) => (
-                  <motion.button
-                    key={i}
-                    onClick={() => setCurrentImage(i)}
-                    className={`flex-shrink-0 w-24 h-24 rounded-2xl border-4 overflow-hidden shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105 ${
-                      i === currentImage 
-                        ? "border-primary shadow-primary/25 ring-4 ring-primary/30" 
-                        : "border-transparent hover:border-primary/50"
-                    }`}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <img 
-                      src={img} 
-                      className="w-full h-full object-cover"
-                      alt={`${product.name} ${i + 1}`}
-                    />
-                  </motion.button>
-                ))}
-              </motion.div>
+              {galleryImages.length > 1 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex gap-3 mt-6 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+                >
+                  {galleryImages.map((img, i) => (
+                    <motion.button
+                      key={i}
+                      onClick={() => setCurrentImage(i)}
+                      className={`flex-shrink-0 w-24 h-24 rounded-2xl border-4 overflow-hidden shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+                        i === currentImage 
+                          ? "border-primary shadow-primary/25 ring-4 ring-primary/30" 
+                          : "border-transparent hover:border-primary/50"
+                      }`}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <img 
+                        src={img} 
+                        className="w-full h-full object-cover"
+                        alt={`${product.name} ${i + 1}`}
+                      />
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
             </motion.div>
 
             {/* Product Info */}
@@ -191,7 +251,7 @@ export default function ProductDetails() {
               >
                 <div className="flex items-baseline gap-4">
                   <div className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent drop-shadow-2xl">
-                    ₹{product.price.toLocaleString()}
+                    ₹{product.price?.toLocaleString() || "0"}
                   </div>
                   <div className="text-sm text-muted-foreground uppercase tracking-wider font-medium">per unit</div>
                 </div>
@@ -236,7 +296,12 @@ export default function ProductDetails() {
                 <Button
                   size="lg"
                   className="flex-1 h-16 text-xl font-black rounded-3xl shadow-2xl hover:shadow-emerald-500/25 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 group relative overflow-hidden"
-                  onClick={() => addItem({ ...product, quantity })}
+                  onClick={() => addItem({ 
+                    ...product, 
+                    _id: product._id,
+                    imageUrl: product.images?.[0],
+                    quantity 
+                  })}
                 >
                   <ShoppingCart className="w-7 h-7 mr-4 group-hover:translate-x-1 transition-transform" />
                   Add to Cart • {quantity > 1 && `x${quantity}`}
@@ -282,7 +347,7 @@ export default function ProductDetails() {
         </div>
       </section>
 
-      {/* Details Tabs */}
+      {/* Details Tabs - EXACT SAME AS ORIGINAL */}
       <section className="py-24 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 max-w-6xl">
           <motion.div 
@@ -335,7 +400,7 @@ export default function ProductDetails() {
                     <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-4xl p-12 shadow-2xl border border-blue-200/30">
                       <div className="relative z-10">
                         <img 
-                          src={product.imageUrl} 
+                          src={product.images?.[0]} 
                           className="w-full max-w-md mx-auto drop-shadow-2xl"
                           alt={product.name}
                         />
@@ -445,46 +510,46 @@ export default function ProductDetails() {
         </div>
       </section>
 
-      {/* Similar Products */}
-      {similarProducts.length > 0 && (
-        <section className="py-24">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <motion.h2 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              className="text-4xl font-black text-center mb-16 bg-gradient-to-r from-muted-foreground to-primary bg-clip-text"
-            >
-              Similar Equipment
-            </motion.h2>
-            
+      {/* Similar Products - ALWAYS SHOWS SECTION */}
+      <section className="py-24">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <motion.h2 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-4xl font-black text-center mb-16 bg-gradient-to-r from-muted-foreground to-primary bg-clip-text"
+          >
+            Similar Equipment
+          </motion.h2>
+          
+          {similarProducts.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8">
               {similarProducts.map((sp, i) => (
                 <motion.div
-                  key={sp.id}
+                  key={sp._id}
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   whileHover={{ y: -20, transition: { duration: 0.4 } }}
                   className="group cursor-pointer"
                 >
-                  <Link href={`/products/${sp.id}`}>
+                  <Link href={`/products/${sp._id}`}>
                     <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-8 shadow-xl hover:shadow-3xl border border-white/50 hover:border-primary/30 transition-all duration-500 h-[420px] flex flex-col overflow-hidden hover:bg-white">
                       <div className="relative h-64 mb-6 overflow-hidden rounded-3xl">
                         <img
-                          src={sp.imageUrl}
+                          src={sp.images?.[0]}
                           className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                           alt={sp.name}
                         />
-                        <div className="absolute top-4 right-4">
+                        {/* <div className="absolute top-4 right-4">
                           <Badge className="bg-gradient-to-r from-primary to-secondary px-4 py-2 font-bold shadow-lg">
                             -12%
                           </Badge>
-                        </div>
+                        </div> */}
                       </div>
                       <div className="flex-1 flex flex-col">
                         <h3 className="font-bold text-xl mb-3 line-clamp-2 group-hover:text-primary transition-colors">{sp.name}</h3>
                         <div className="flex items-center gap-4 mb-6">
-                          <span className="text-2xl font-black text-emerald-600">₹{sp.price.toLocaleString()}</span>
-                          <span className="text-xl text-muted-foreground line-through opacity-60">₹{(sp.price * 1.12).toLocaleString()}</span>
+                          <span className="text-2xl font-black text-emerald-600">₹{sp.price?.toLocaleString()}</span>
+                          {/* <span className="text-xl text-muted-foreground line-through opacity-60">₹{((sp.price || 0) * 1.12).toLocaleString()}</span> */}
                         </div>
                         <div className="mt-auto flex items-center gap-3 text-sm text-muted-foreground mb-6">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -499,9 +564,29 @@ export default function ProductDetails() {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-24"
+            >
+              <div className="w-32 h-32 bg-gradient-to-br from-muted/30 to-muted mx-auto rounded-3xl flex items-center justify-center mb-8 shadow-2xl">
+                <Package className="w-16 h-16 text-muted-foreground" />
+              </div>
+              <h3 className="text-3xl font-black mb-4 text-muted-foreground">No Similar Products</h3>
+              <p className="text-xl text-muted-foreground max-w-md mx-auto mb-8">
+                No other products in this category are currently available.
+              </p>
+              <Link href="/products">
+                <Button size="lg" className="px-12 h-14 text-lg font-bold shadow-xl">
+                  <ChevronLeft className="w-5 h-5 mr-2" />
+                  Browse All Products
+                </Button>
+              </Link>
+            </motion.div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

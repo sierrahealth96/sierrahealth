@@ -3,6 +3,6 @@ import { getCrmStats } from "../controllers/crmController.js";
 
 const router = express.Router();
 
-router.get("/", getCrmStats);
+router.get("/crm/admin", getCrmStats);
 
 export default router;
