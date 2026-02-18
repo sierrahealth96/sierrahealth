@@ -1,26 +1,49 @@
 // services/emailSend.js
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-dotenv.config(); // ✅ MUST be first
+import sgMail from "@sendgrid/mail";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,              // ✅ IPv4-safe
-  secure: false,          // ✅ MUST be false for 587
-  auth: {
-    // user: "sierrahealth96@gmail.com",
-    // pass: "snyrzxiwuypwpxbr" // app password
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  family: 4 
-});
+// 🔑 SendGrid API key (DIRECT – as you asked)
+sgMail.setApiKey(
+  process.env.SENDGRID_API_KEY
+);
 
-/* ---------- ADMIN ---------- */
-export const sendOrderEmailToAdmin = async ({
+/* ===============================
+   DEBUG LOGGER
+================================ */
+const log = (...args) => {
+  console.log("[EMAIL]", ...args);
+};
+
+/* ===============================
+   SAFE SEND (LOG EVERYTHING)
+================================ */
+const safeSend = async (mail, label) => {
+  try {
+    log(`Attempting to send an ${label} email`);
+    log("TO:", mail.to);
+    log("FROM:", mail.from);
+    log("SUBJECT:", mail.subject);
+
+    const response = await sgMail.send(mail);
+
+    log(`${label} email SENT ✅`);
+    log("SendGrid response status: ", response[0]?.statusCode);
+  } catch (err) {
+    log(`${label} email FAILED ❌`);
+
+    if (err.response) {
+      log("Status Code:", err.response.statusCode);
+      log("Body:", JSON.stringify(err.response.body, null, 2));
+      log("Headers:", err.response.headers);
+    } else {
+      log("Error message:", err.message);
+    }
+  }
+};
+
+/* ===============================
+   ADMIN EMAIL
+================================ */
+export const sendOrderEmailToAdmin = ({
   adminEmail,
   name,
   email,
@@ -28,56 +51,63 @@ export const sendOrderEmailToAdmin = async ({
   products,
   message
 }) => {
-  const productList =
-    products.length > 0
-      ? products.map(p => `• ${p.name} (Qty: ${p.quantity})`).join("\n")
-      : "No products selected";
+  const productList = products?.length
+    ? products.map(p => `• ${p.name} (Qty: ${p.quantity})`).join("<br/>")
+    : "No products selected";
 
-  await transporter.sendMail({
-    from: `"Website Lead" <${adminEmail}>`,
-    to: adminEmail,
-    subject: "New Product Inquiry",
-    text: `
-Name: ${name}
-Email: ${email}
-Phone: ${phone}
+  safeSend(
+    {
+      to: adminEmail,
+      from: "sierrahealth96@gmail.com", // MUST be verified in SendGrid
+      subject: "New Product Inquiry",
+      html: `
+        <h2>New Inquiry</h2>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Phone:</b> ${phone}</p>
 
-Products:
-${productList}
+        <h3>Products</h3>
+        <p>${productList}</p>
 
-Message:
-${message || "N/A"}
-`
-  });
+        <h3>Message</h3>
+        <p>${message || "N/A"}</p>
+      `
+    },
+    "ADMIN"
+  );
 };
 
-/* ---------- USER ---------- */
-export const sendOrderEmailToUser = async ({
+/* ===============================
+   USER EMAIL
+================================ */
+export const sendOrderEmailToUser = ({
   to,
   name,
   phone,
   products
 }) => {
-  const productList =
-    products.length > 0
-      ? products.map(p => `• ${p.name} (Qty: ${p.quantity})`).join("\n")
-      : "No products selected";
+  const productList = products?.length
+    ? products.map(p => `• ${p.name} (Qty: ${p.quantity})`).join("<br/>")
+    : "No products selected";
 
-  await transporter.sendMail({
-    from: `"Medical Equipment" <sierrahealth96@gmail.com>`,
-    to,
-    subject: "Thanks for contacting us",
-    text: `
-Hi ${name},
+  safeSend(
+    {
+      to,
+      from: "sierrahealth96@gmail.com", // MUST be verified
+      subject: "We received your inquiry",
+      html: `
+        <p>Hi ${name},</p>
 
-We received your inquiry.
+        <p>Thanks for contacting <b>Visionary Medical</b>.</p>
 
-Phone: ${phone}
+        <p><b>Phone:</b> ${phone}</p>
 
-Products:
-${productList}
+        <h3>Products</h3>
+        <p>${productList}</p>
 
-Our team will contact you shortly.
-`
-  });
+        <p>Our team will contact you shortly.</p>
+      `
+    },
+    "USER"
+  );
 };
