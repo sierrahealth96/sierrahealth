@@ -1,13 +1,17 @@
 // services/emailSend.js
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config(); // ✅ MUST be first
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,              // ✅ IPv4-safe
   secure: false,          // ✅ MUST be false for 587
   auth: {
-    user: "sierrahealth96@gmail.com",
-    pass: "snyrzxiwuypwpxbr" // app password
+    // user: "sierrahealth96@gmail.com",
+    // pass: "snyrzxiwuypwpxbr" // app password
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS
   },
   tls: {
     rejectUnauthorized: false
