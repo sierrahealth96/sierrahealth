@@ -2,11 +2,17 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,              // ✅ IPv4-safe
+  secure: false,          // ✅ MUST be false for 587
   auth: {
     user: "sierrahealth96@gmail.com",
-    pass: "snyrzxiwuypwpxbr"
-  }
+    pass: "snyrzxiwuypwpxbr" // app password
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  family: 4 
 });
 
 /* ---------- ADMIN ---------- */
