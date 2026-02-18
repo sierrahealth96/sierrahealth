@@ -57,7 +57,7 @@ export const createOrder = async (req, res) => {
     });
 
     // 5️⃣ Admin email
-    await sendOrderEmailToAdmin({
+      sendOrderEmailToAdmin({
       adminEmail: process.env.EMAIL,
       name: customerName,
       email,
@@ -68,7 +68,7 @@ export const createOrder = async (req, res) => {
 
     // 6️⃣ User email
     if (email) {
-      await sendOrderEmailToUser({
+        sendOrderEmailToUser({
         to: email,
         name: customerName,
         phone,
