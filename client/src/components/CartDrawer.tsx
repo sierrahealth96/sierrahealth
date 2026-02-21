@@ -95,7 +95,7 @@ export function CartDrawer() {
                         {item.name}
                       </h4>
                       <span className="text-emerald-600 font-bold text-lg">
-                        ₹{item.price.toLocaleString()}
+                        {/* ₹{item.price.toLocaleString()} */}
                       </span>
                     </div>
 
@@ -146,10 +146,10 @@ export function CartDrawer() {
           <div className="border-t border-gray-100 p-6 bg-white/100 backdrop-blur-sm shadow-lg">
             <div className="space-y-4">
               <div className="flex justify-between items-center text-lg font-bold">
-                <span className="text-gray-700">Total</span>
+                {/* <span className="text-gray-700">Total</span>
                 <span className="text-3xl font-black text-emerald-600">
                   ₹{total.toLocaleString()}
-                </span>
+                </span> */}
               </div>
               
               <Link href="/checkout" onClick={() => setIsOpen(false)}>

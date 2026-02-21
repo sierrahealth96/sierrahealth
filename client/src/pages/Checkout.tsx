@@ -169,15 +169,15 @@ export default function Checkout() {
                         </p>
                       </div>
                       <div className="text-right font-bold text-xl text-emerald-600 min-w-[100px]">
-                        ₹{(item.price * item.quantity).toLocaleString()}
+                        {/* ₹{(item.price * item.quantity).toLocaleString()} */}
                       </div>
                     </motion.div>
                   ))}
                   
                   <div className="pt-6 border-t border-emerald-200/50 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 p-6 rounded-3xl backdrop-blur-sm">
                     <div className="flex justify-between items-center text-2xl font-black text-gray-900 mb-2">
-                      <span>Total</span>
-                      <span>₹{total.toLocaleString()}</span>
+                      {/* <span>Total</span>
+                      <span>₹{total.toLocaleString()}</span> */}
                     </div>
                     <p className="text-sm text-emerald-700 font-semibold flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4" />

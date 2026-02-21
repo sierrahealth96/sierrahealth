@@ -11,6 +11,8 @@ import { BASE_URL } from "@/Url";
 
 const PRODUCT_DETAILS = `${BASE_URL}/api/products/get/details/`;
 const PRODUCT_BY_CATEGORY = `${BASE_URL}/api/products/get/by-category/`;
+const PRODUCT_REVIEWS = `${BASE_URL}/api/reviews/product/`;
+const REVIEW_SUBMIT = `${BASE_URL}/api/reviews/submit`;
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -19,8 +21,36 @@ export default function ProductDetails() {
   const [currentImage, setCurrentImage] = useState(0);
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ name: "", stars: 5, comment: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+
+// 🆕 CORRECTED PRICE FORMATTER - PROPER HYPHEN STYLE
+const formatPriceRange = (price) => {
+  if (!price || price === 0) return "Price on Request";
+
+  // Only for prices >= 1 Lakh
+  if (price >= 100000) {
+    const baseValue = Math.round(price / 100000) * 100000;
+    const minRange = Math.max(0, baseValue - 300000);
+    const maxRange = baseValue + 300000;
+
+    // Convert to lakhs
+    const minLakhs = Math.round(minRange / 100000);
+    const maxLakhs = Math.round(maxRange / 100000);
+
+    // ✅ Single unit, no spaces around hyphen
+    return `${minLakhs}-${maxLakhs} Lakhs`;
+  }
+
+  return `₹${price.toLocaleString("en-IN")}`;
+};
 
   // Fetch product details
   useEffect(() => {
@@ -48,6 +78,25 @@ export default function ProductDetails() {
     fetchProductDetails();
   }, [id]);
 
+  // Fetch reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!id) return;
+      try {
+        const response = await fetch(`${PRODUCT_REVIEWS}${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setReviews(data.reviews || []);
+          setAverageRating(data.averageRating || 0);
+          setTotalReviews(data.totalReviews || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err);
+      }
+    };
+    fetchReviews();
+  }, [id]);
+
   // Fetch similar products after product details load
   useEffect(() => {
     const fetchSimilarProducts = async () => {
@@ -71,15 +120,46 @@ export default function ProductDetails() {
     fetchSimilarProducts();
   }, [product, id]);
 
+  // Submit review handler
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!id) return;
+
+    setSubmittingReview(true);
+    try {
+      const response = await fetch(REVIEW_SUBMIT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...reviewForm, productId: id })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setSubmitSuccess(true);
+        setReviewForm({ name: "", stars: 5, comment: "" });
+        // Refresh reviews after 1.5s
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        alert(data.error || "Failed to submit review");
+      }
+    } catch (err) {
+      alert("Network error");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const galleryImages = product?.images || [];
 
   const specs = [
     { label: "Brand", value: product?.brand || "N/A", icon: Award },
     { label: "Category", value: product?.category?.name || "N/A", icon: Star },
+    { label: "Rating", value: `${averageRating.toFixed(1)} (${totalReviews})`, icon: Star },
     { label: "Warranty", value: "2 Years", icon: Shield },
     { label: "Installation", value: "Pan India", icon: Truck },
-    { label: "Training", value: "Included", icon: Eye },
-    { label: "Service", value: "24/7 Support", icon: Shield }
+    { label: "Training", value: "Included", icon: Eye }
   ];
 
   if (loading) {
@@ -202,7 +282,7 @@ export default function ProductDetails() {
                 <div className="ml-auto w-1 h-4 sm:h-6 bg-gradient-to-b from-emerald-500/50 to-transparent rounded-full animate-pulse hidden sm:block" />
               </motion.div>
 
-              {/* Title & Rating */}
+              {/* Title & Dynamic Rating */}
               <div className="space-y-4 sm:space-y-6">
                 <motion.h1 
                   initial={{ opacity: 0, y: 30 }}
@@ -212,7 +292,11 @@ export default function ProductDetails() {
                   {product.name}
                 </motion.h1>
                 
-                <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8"
+                >
                   <div className="flex gap-1 sm:gap-0.5">
                     {Array(5).fill(0).map((_, i) => (
                       <motion.div
@@ -224,12 +308,14 @@ export default function ProductDetails() {
                           delay: i * 0.1 
                         }}
                       >
-                        <Star className={`w-5 h-5 sm:w-6 sm:h-6 ${i < 4.8 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                        <Star className={`w-5 h-5 sm:w-6 sm:h-6 ${i < averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
                       </motion.div>
                     ))}
                   </div>
-                  <span className="text-lg sm:text-xl font-bold text-yellow-600">(4.8 • 124 reviews)</span>
-                </div>
+                  <span className="text-lg sm:text-xl font-bold text-yellow-600">
+                    ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
+                  </span>
+                </motion.div>
               </div>
 
               {/* Description */}
@@ -251,7 +337,7 @@ export default function ProductDetails() {
               >
                 <div className="flex items-baseline gap-2 sm:gap-4">
                   <div className="text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent drop-shadow-2xl">
-                    ₹{product.price?.toLocaleString() || "0"}
+                    {formatPriceRange(product.price)}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider font-medium">per unit</div>
                 </div>
@@ -454,55 +540,220 @@ export default function ProductDetails() {
                 </div>
               </TabsContent>
 
-              {/* Reviews */}
-              <TabsContent value="reviews" className="p-6 sm:p-12 pt-6 sm:pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-                  {[
-                    {
-                      author: "Dr. Anirban Sen",
-                      clinic: "Netralaya Eye Hospital",
-                      rating: 5,
-                      text: "Transformed our diagnostic workflow. Exceptional accuracy and build quality.",
-                      date: "Feb 2026"
-                    },
-                    {
-                      author: "Vision Care Clinic",
-                      clinic: "Kolkata",
-                      rating: 4.8,
-                      text: "Installation was smooth, support team very responsive. Highly recommend.",
-                      date: "Jan 2026"
-                    }
-                  ].map((review, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.2 }}
-                      className="bg-gradient-to-b from-white/80 to-slate-50/50 p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl border border-white/50 transition-all w-full"
+              {/* Reviews - FULLY INTEGRATED */}
+              <TabsContent value="reviews" className="p-6 sm:p-12 pt-6 sm:pt-4 space-y-8">
+                {/* Reviews Header */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between mb-8 p-6 bg-gradient-to-r from-yellow-50 to-yellow-100/50 rounded-3xl border border-yellow-200/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-0.5">
+                      {Array(5).fill(0).map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-6 h-6 ${i < averageRating ? 'fill-yellow-400 text-yellow-400 drop-shadow-lg' : 'text-muted-foreground'}`} 
+                        />
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-3xl font-black text-foreground">{averageRating.toFixed(1)} / 5</p>
+                      <p className="text-lg font-semibold text-muted-foreground">
+                        {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 shadow-xl px-8 h-12 font-bold text-base"
+                  >
+                    ✍️ Write Review
+                  </Button>
+                </motion.div>
+
+                {/* Existing Reviews */}
+                <div id="existing-reviews">
+                  {reviews.length === 0 ? (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-center py-16 px-8"
                     >
-                      <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 rounded-2xl sm:rounded-3xl flex items-center justify-center border-2 border-emerald-500/30 shadow-xl flex-shrink-0 mt-1">
-                          <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-lg sm:text-xl line-clamp-1">{review.author}</h4>
-                          <p className="text-muted-foreground text-sm sm:text-base line-clamp-1">{review.clinic}</p>
-                        </div>
+                      <div className="w-24 h-24 bg-gradient-to-br from-yellow-100 to-yellow-200 mx-auto rounded-3xl flex items-center justify-center mb-6 shadow-2xl border-4 border-yellow-200/50">
+                        <Star className="w-12 h-12 text-yellow-400" />
                       </div>
-                      <div className="flex gap-0.5 sm:gap-1 mb-4 sm:mb-6">
-                        {Array(5).fill(0).map((_, j) => (
-                          <Star 
-                            key={j} 
-                            className={`w-4 h-4 sm:w-5 sm:h-5 ${j < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
-                          />
-                        ))}
-                      </div>
-                      <p className="text-base sm:text-lg leading-relaxed mb-4 sm:mb-6 line-clamp-3">{review.text}</p>
-                      <p className="text-sm sm:text-base text-muted-foreground flex items-center gap-1">
-                        {review.date} • Verified Purchase
+                      <h3 className="text-2xl sm:text-3xl font-black mb-4 text-muted-foreground">No Reviews Yet</h3>
+                      <p className="text-xl text-muted-foreground mb-8 max-w-md mx-auto">
+                        Be the first to share your experience with this product!
                       </p>
                     </motion.div>
-                  ))}
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+                      {reviews.map((review, i) => (
+                        <motion.div
+                          key={review._id}
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          className="group bg-gradient-to-b from-white/90 to-slate-50/50 p-8 rounded-3xl shadow-2xl hover:shadow-3xl border border-yellow-100/50 hover:border-yellow-200/50 transition-all hover:-translate-y-2"
+                        >
+                          <div className="flex items-start gap-4 mb-6">
+                            <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center shadow-xl flex-shrink-0 mt-1 group-hover:scale-110 transition-transform">
+                              <span className="text-2xl font-bold text-white">★</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-black text-xl text-foreground line-clamp-1 group-hover:text-yellow-600 transition-colors mb-1">{review.name}</h4>
+                              <div className="flex gap-0.5 mb-2">
+                                {Array(5).fill(0).map((_, j) => (
+                                  <Star 
+                                    key={j} 
+                                    className={`w-5 h-5 ${j < review.stars ? 'fill-yellow-400 text-yellow-400 drop-shadow-sm' : 'text-yellow-200'}`} 
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-sm text-muted-foreground font-medium">
+                                {new Date(review.createdAt).toLocaleDateString('en-IN', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-lg leading-relaxed text-muted-foreground/90 line-clamp-4 group-hover:line-clamp-none transition-all">
+                            {review.comment}
+                          </p>
+                          <div className="mt-6 pt-6 border-t border-yellow-100/50 flex items-center gap-2">
+                            <Badge className="bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-700 border-emerald-200/50 font-bold">
+                              Verified Review
+                            </Badge>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Submit Review Form */}
+                <div id="review-form" className="mt-16">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-emerald-50/90 to-yellow-50/90 backdrop-blur-xl p-8 sm:p-12 rounded-4xl border-2 border-emerald-200/50 shadow-2xl"
+                  >
+                    <h3 className="text-3xl font-black mb-8 flex items-center gap-4 text-foreground">
+                      <Star className="w-10 h-10 text-yellow-500 drop-shadow-lg" />
+                      Share Your Experience
+                    </h3>
+                    
+                    {!submitSuccess ? (
+                      <form onSubmit={handleSubmitReview} className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+                        <div className="space-y-3">
+                          <label className="block text-lg font-bold text-foreground mb-3">Your Name</label>
+                          <input
+                            type="text"
+                            value={reviewForm.name}
+                            onChange={(e) => setReviewForm({...reviewForm, name: e.target.value})}
+                            className="w-full p-5 border-2 border-emerald-200/50 rounded-3xl focus:ring-4 focus:ring-emerald-400/50 focus:border-emerald-400 bg-white/80 backdrop-blur-sm font-semibold text-lg placeholder:text-muted-foreground transition-all duration-300 hover:shadow-md"
+                            placeholder="Enter your full name"
+                            required
+                            maxLength={50}
+                          />
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <label className="block text-lg font-bold text-foreground mb-3">Your Rating</label>
+                          <div className="flex gap-2 p-4 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-yellow-200/50 shadow-inner">
+                            {[5,4,3,2,1].map((star) => (
+                              <motion.button
+                                key={star}
+                                type="button"
+                                onClick={() => setReviewForm({...reviewForm, stars: star})}
+                                className={`p-4 rounded-2xl font-bold text-2xl transition-all duration-300 hover:scale-110 hover:shadow-lg flex-shrink-0 ${
+                                  reviewForm.stars >= star 
+                                    ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white shadow-yellow-500/50 shadow-2xl' 
+                                    : 'bg-gray-100/50 text-gray-400 hover:bg-yellow-100 hover:text-yellow-500'
+                                }`}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                ★
+                              </motion.button>
+                            ))}
+                          </div>
+                          <p className="text-xl font-bold text-foreground bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+                            {reviewForm.stars} Star{reviewForm.stars !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        
+                        <div className="md:col-span-2 space-y-3">
+                          <label className="block text-lg font-bold text-foreground mb-3">Your Review</label>
+                          <textarea
+                            value={reviewForm.comment}
+                            onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+                            rows={5}
+                            className="w-full p-6 border-2 border-emerald-200/50 rounded-3xl focus:ring-4 focus:ring-emerald-400/50 focus:border-emerald-400 bg-white/80 backdrop-blur-sm font-medium text-lg placeholder:text-muted-foreground resize-vertical transition-all duration-300 hover:shadow-md"
+                            placeholder="Share your honest experience with this product. What did you like? What could be better?"
+                            required
+                            maxLength={1000}
+                          />
+                          <p className="text-sm text-muted-foreground font-medium">
+                            {reviewForm.comment.length}/1000 characters
+                          </p>
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <Button 
+                            type="submit" 
+                            disabled={submittingReview || !reviewForm.name || !reviewForm.comment}
+                            className="w-full h-16 bg-gradient-to-r from-emerald-500 via-emerald-600 to-yellow-500 hover:from-emerald-600 hover:to-yellow-600 text-xl font-black shadow-2xl hover:shadow-emerald-500/25 transition-all duration-300 rounded-3xl border-2 border-emerald-200/50"
+                          >
+                            {submittingReview ? (
+                              <>
+                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
+                                Submitting Your Review...
+                              </>
+                            ) : (
+                              "🚀 Submit Your Review"
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <motion.div 
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-center py-16 px-8"
+                      >
+                        <div className="w-28 h-28 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl border-4 border-white/50">
+                          <Star className="w-16 h-16 text-white drop-shadow-lg" />
+                        </div>
+                        <h3 className="text-4xl font-black mb-4 bg-gradient-to-r from-emerald-600 to-yellow-600 bg-clip-text text-transparent">
+                          Thank You! 🎉
+                        </h3>
+                        <p className="text-xl text-emerald-600 font-semibold mb-8 max-w-lg mx-auto leading-relaxed">
+                          Your review has been submitted successfully and is awaiting admin approval. 
+                          It will appear here once approved!
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                          <Button 
+                            onClick={() => setSubmitSuccess(false)}
+                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 px-8 h-14 text-lg font-bold shadow-xl"
+                          >
+                            Write Another Review
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            className="px-8 h-14 text-lg font-bold border-2 border-emerald-500/50 hover:bg-emerald-500/10"
+                          >
+                            ← Back to Reviews
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </motion.div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -543,7 +794,7 @@ export default function ProductDetails() {
                       <div className="flex-1 flex flex-col">
                         <h3 className="font-bold text-lg sm:text-xl mb-3 sm:mb-4 line-clamp-2 group-hover:text-emerald-600 transition-colors">{sp.name}</h3>
                         <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-                          <span className="text-xl sm:text-2xl font-black text-emerald-600">₹{sp.price?.toLocaleString()}</span>
+                          <span className="text-xl sm:text-2xl font-black text-emerald-600">{formatPriceRange(sp.price)}</span>
                         </div>
                         <div className="mt-auto flex items-center gap-2 sm:gap-3 text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
                           <Star className="w-4 h-4 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />

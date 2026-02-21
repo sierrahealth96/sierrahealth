@@ -2,12 +2,13 @@
 import { Navbar } from "@/components/Navbar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { Bell, Package, Settings, MessageCircle, Users, TrendingUp } from "lucide-react";
+import { Bell, Package, Settings, MessageCircle, Users, TrendingUp, Star } from "lucide-react";
 import QueriesPanel from "./QueriesPanel";
 import AddProductForm from "./AddProductForm";
 import CategoryManager from "./CategoryManager";
 import { useEffect, useState } from "react";
 import { BASE_URL } from "@/Url";
+import AdminReviewsPanel from "./AdminReviewsPanel";
 
 const CRM_API = `${BASE_URL}/api/crm/crm/admin`;
  
@@ -127,49 +128,74 @@ useEffect(() => {
       </section>
 
       <div className="container mx-auto px-4 max-w-7xl pb-24">
-        <Tabs defaultValue="queries" className="w-full">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/60 backdrop-blur-xl rounded-4xl p-8 shadow-2xl border border-white/50 mb-8"
-          >
-            <TabsList className="grid w-full grid-cols-3 bg-transparent p-1 rounded-3xl border-none shadow-xl backdrop-blur-sm bg-white/80">
-              <TabsTrigger 
-                value="queries" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-white rounded-2xl data-[state=active]:shadow-2xl transition-all duration-300 font-bold py-4 h-auto"
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Customer Queries
-              </TabsTrigger>
-              <TabsTrigger 
-                value="add-product" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white rounded-2xl data-[state=active]:shadow-2xl transition-all duration-300 font-bold py-4 h-auto"
-              >
-                <Package className="w-5 h-5 mr-2" />
-                Add Products
-              </TabsTrigger>
-              <TabsTrigger 
-                value="categories" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white rounded-2xl data-[state=active]:shadow-2xl transition-all duration-300 font-bold py-4 h-auto"
-              >
-                <Settings className="w-5 h-5 mr-2" />
-                Categories
-              </TabsTrigger>
-            </TabsList>
-          </motion.div>
+<Tabs defaultValue="queries" className="w-full">
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white/60 backdrop-blur-xl rounded-4xl p-8 shadow-2xl border border-white/50 mb-8"
+  >
+    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-transparent p-1 rounded-3xl border-none shadow-xl backdrop-blur-sm bg-white/80">
+      
+      {/* Queries Tab - BLUE */}
+      <TabsTrigger 
+        value="queries" 
+        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-[1.02] transition-all duration-300 font-bold py-4 h-auto flex items-center gap-2 justify-start lg:justify-center group hover:bg-blue-50/50 hover:border-blue-200/50 hover:shadow-md"
+      >
+        <MessageCircle className="w-5 h-5 lg:w-6 lg:h-6 group-data-[state=active]:text-white text-blue-500" />
+        <span className="hidden lg:inline text-sm lg:text-base">Customer Queries</span>
+        <span className="lg:hidden text-xs">Queries</span>
+      </TabsTrigger>
+      
+      {/* Reviews Tab - YELLOW */}
+      <TabsTrigger 
+        value="reviews" 
+        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-[1.02] transition-all duration-300 font-bold py-4 h-auto flex items-center gap-2 justify-start lg:justify-center group hover:bg-yellow-50/50 hover:border-yellow-200/50 hover:shadow-md"
+      >
+        <Star className="w-5 h-5 lg:w-6 lg:h-6 group-data-[state=active]:text-white text-yellow-500" />
+        <span className="hidden lg:inline text-sm lg:text-base">Reviews</span>
+        <span className="lg:hidden text-xs">Reviews</span>
+      </TabsTrigger>
+      
+      {/* Add Product Tab - EMERALD */}
+      <TabsTrigger 
+        value="add-product" 
+        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-[1.02] transition-all duration-300 font-bold py-4 h-auto flex items-center gap-2 justify-start lg:justify-center group hover:bg-emerald-50/50 hover:border-emerald-200/50 hover:shadow-md"
+      >
+        <Package className="w-5 h-5 lg:w-6 lg:h-6 group-data-[state=active]:text-white text-emerald-500" />
+        <span className="hidden lg:inline text-sm lg:text-base">Add Products</span>
+        <span className="lg:hidden text-xs">Products</span>
+      </TabsTrigger>
+      
+      {/* Categories Tab - PURPLE */}
+      <TabsTrigger 
+        value="categories" 
+        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-[1.02] transition-all duration-300 font-bold py-4 h-auto flex items-center gap-2 justify-start lg:justify-center group hover:bg-purple-50/50 hover:border-purple-200/50 hover:shadow-md"
+      >
+        <Settings className="w-5 h-5 lg:w-6 lg:h-6 group-data-[state=active]:text-white text-purple-500" />
+        <span className="hidden lg:inline text-sm lg:text-base">Categories</span>
+        <span className="lg:hidden text-xs">Categories</span>
+      </TabsTrigger>
+      
+    </TabsList>
+  </motion.div>
 
-          <TabsContent value="queries" className="mt-0">
-            <QueriesPanel />
-          </TabsContent>
+  <TabsContent value="queries" className="mt-0">
+    <QueriesPanel />
+  </TabsContent>
+  
+  <TabsContent value="reviews" className="mt-0">
+    <AdminReviewsPanel />
+  </TabsContent>
+  
+  <TabsContent value="add-product" className="mt-0">
+    <AddProductForm />
+  </TabsContent>
+  
+  <TabsContent value="categories" className="mt-0">
+    <CategoryManager />
+  </TabsContent>
+</Tabs>
 
-          <TabsContent value="add-product" className="mt-0">
-            <AddProductForm />
-          </TabsContent>
-
-          <TabsContent value="categories" className="mt-0">
-            <CategoryManager />
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );

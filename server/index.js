@@ -9,6 +9,7 @@ import productRoute from "./routes/productRoute.js";
 import orderRoute from "./routes/orderRoute.js";
 import categoryRoute from "./routes/categoryRoute.js";
 import crmRoute from "./routes/crmRoute.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 connectDB();
 
@@ -20,6 +21,7 @@ app.use("/api/products", productRoute);
 app.use("/api/orders", orderRoute);
 app.use("/api/categories", categoryRoute);
 app.use("/api/crm", crmRoute);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (_, res) => res.send("API Running"));
 

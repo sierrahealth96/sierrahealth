@@ -11,8 +11,12 @@ const productSchema = new mongoose.Schema(
     },
     price: Number,
     description: String,
-    images: [String], // multiple image URLs
-    isBestSeller: { type: Boolean, default: false }
+    images: [String],
+    isBestSeller: { type: Boolean, default: false },
+    reviews: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Review"
+    }]
   },
   { timestamps: true }
 );
