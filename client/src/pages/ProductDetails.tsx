@@ -665,24 +665,25 @@ const formatPriceRange = (price) => {
                         
                         <div className="space-y-4">
                           <label className="block text-lg font-bold text-foreground mb-3">Your Rating</label>
-                          <div className="flex gap-2 p-4 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-yellow-200/50 shadow-inner">
-                            {[5,4,3,2,1].map((star) => (
-                              <motion.button
-                                key={star}
-                                type="button"
-                                onClick={() => setReviewForm({...reviewForm, stars: star})}
-                                className={`p-4 rounded-2xl font-bold text-2xl transition-all duration-300 hover:scale-110 hover:shadow-lg flex-shrink-0 ${
-                                  reviewForm.stars >= star 
-                                    ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white shadow-yellow-500/50 shadow-2xl' 
-                                    : 'bg-gray-100/50 text-gray-400 hover:bg-yellow-100 hover:text-yellow-500'
-                                }`}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                ★
-                              </motion.button>
-                            ))}
-                          </div>
+ <div className="flex gap-1 sm:gap-2 p-3 sm:p-4 bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-yellow-200/50 shadow-inner overflow-hidden">
+  {[5,4,3,2,1].map((star) => (
+    <motion.button
+      key={star}
+      type="button"
+      onClick={() => setReviewForm({...reviewForm, stars: star})}
+      className={`flex-1 sm:flex-none p-2 sm:p-4 rounded-xl sm:rounded-2xl font-bold text-lg sm:text-2xl transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+        reviewForm.stars >= star 
+          ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white shadow-yellow-500/25 shadow-xl' 
+          : 'bg-gray-100/50 text-gray-400 hover:bg-yellow-100 hover:text-yellow-400'
+      }`}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      ★
+    </motion.button>
+  ))}
+</div>
+
                           <p className="text-xl font-bold text-foreground bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                             {reviewForm.stars} Star{reviewForm.stars !== 1 ? 's' : ''}
                           </p>
