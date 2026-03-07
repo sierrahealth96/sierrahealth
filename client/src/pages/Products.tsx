@@ -48,8 +48,8 @@ const formatPriceRange = (price) => {
   // Only for prices >= 1 Lakh
   if (price >= 100000) {
     const baseValue = Math.round(price / 100000) * 100000;
-    const minRange = Math.max(0, baseValue - 300000);
-    const maxRange = baseValue + 300000;
+    const minRange = Math.max(0, baseValue - 100000);
+    const maxRange = baseValue + 100000;
 
     // Convert to lakhs
     const minLakhs = Math.round(minRange / 100000);
