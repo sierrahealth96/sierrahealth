@@ -81,14 +81,21 @@ export const addProduct = async (req, res) => {
       name,
       brand,
       category,
-      price,
+      minPrice, 
+      maxPrice,
       description,
       images
     } = req.body;
 
-    if (!name || !category) {
+    if (!name || !category || !minPrice || !maxPrice) {
       return res.status(400).json({
         message: "Product name and category are required"
+      });
+    }
+
+    if (minPrice > maxPrice) {
+      return res.status(400).json({
+        message: "minPrice must be less than or equal to maxPrice"
       });
     }
 
@@ -96,7 +103,8 @@ export const addProduct = async (req, res) => {
       name,
       brand,
       category,
-      price,
+      minPrice, 
+      maxPrice,
       description,
       images // array of cloudinary URLs
     });

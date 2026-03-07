@@ -32,24 +32,23 @@ export default function ProductDetails() {
 
 
 // 🆕 CORRECTED PRICE FORMATTER - PROPER HYPHEN STYLE
-const formatPriceRange = (price) => {
-  if (!price || price === 0) return "Price on Request";
-
-  // Only for prices >= 1 Lakh
-  if (price >= 100000) {
-    const baseValue = Math.round(price / 100000) * 100000;
-    const minRange = Math.max(0, baseValue - 300000);
-    const maxRange = baseValue + 300000;
-
-    // Convert to lakhs
-    const minLakhs = Math.round(minRange / 100000);
-    const maxLakhs = Math.round(maxRange / 100000);
-
-    // ✅ Single unit, no spaces around hyphen
-    return `${minLakhs}-${maxLakhs} Lakhs`;
-  }
-
-  return `₹${price.toLocaleString("en-IN")}`;
+const formatPriceRange = (product) => {
+  if (!product.minPrice || !product.maxPrice) return "Price on Request";
+  
+  const formatSinglePrice = (price) => {
+    if (price >= 100000) {
+      return `${Math.round(price / 100000)}L`; // 1L, 2L, etc.
+    } else if (price >= 1000) {
+      return `${Math.round(price / 1000)}K`; // 10K, 20K, etc.
+    } else {
+      return `₹${price.toLocaleString()}`; // ₹500
+    }
+  };
+  
+  const minFormatted = formatSinglePrice(product.minPrice);
+  const maxFormatted = formatSinglePrice(product.maxPrice);
+  
+  return `${minFormatted} - ${maxFormatted}`;
 };
 
   // Fetch product details
@@ -337,7 +336,7 @@ const formatPriceRange = (price) => {
               >
                 <div className="flex items-baseline gap-2 sm:gap-4">
                   <div className="text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent drop-shadow-2xl">
-                    {formatPriceRange(product.price)}
+                       {formatPriceRange(product)}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider font-medium">per unit</div>
                 </div>
@@ -795,7 +794,7 @@ const formatPriceRange = (price) => {
                       <div className="flex-1 flex flex-col">
                         <h3 className="font-bold text-lg sm:text-xl mb-3 sm:mb-4 line-clamp-2 group-hover:text-emerald-600 transition-colors">{sp.name}</h3>
                         <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-                          <span className="text-xl sm:text-2xl font-black text-emerald-600">{formatPriceRange(sp.price)}</span>
+                          <span className="text-xl sm:text-2xl font-black text-emerald-600">    {formatPriceRange(sp)}</span>
                         </div>
                         <div className="mt-auto flex items-center gap-2 sm:gap-3 text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
                           <Star className="w-4 h-4 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />

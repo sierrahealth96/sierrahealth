@@ -30,24 +30,23 @@ export default function Home() {
   const [hoveredProduct, setHoveredProduct] = useState(null);
 
 
-  const formatPriceRange = (price) => {
-  if (!price || price === 0) return "Price on Request";
-
-  // Only for prices >= 1 Lakh
-  if (price >= 100000) {
-    const baseValue = Math.round(price / 100000) * 100000;
-    const minRange = Math.max(0, baseValue - 300000);
-    const maxRange = baseValue + 300000;
-
-    // Convert to lakhs
-    const minLakhs = Math.round(minRange / 100000);
-    const maxLakhs = Math.round(maxRange / 100000);
-
-    // ✅ Single unit, no spaces around hyphen
-    return `${minLakhs}-${maxLakhs} Lakhs`;
-  }
-
-  return `₹${price.toLocaleString("en-IN")}`;
+const formatPriceRange = (product) => {
+  if (!product.minPrice || !product.maxPrice) return "Price on Request";
+  
+  const formatSinglePrice = (price) => {
+    if (price >= 100000) {
+      return `${Math.round(price / 100000)}L`; // 1L, 2L, etc.
+    } else if (price >= 1000) {
+      return `${Math.round(price / 1000)}K`; // 10K, 20K, etc.
+    } else {
+      return `₹${price.toLocaleString()}`; // ₹500
+    }
+  };
+  
+  const minFormatted = formatSinglePrice(product.minPrice);
+  const maxFormatted = formatSinglePrice(product.maxPrice);
+  
+  return `${minFormatted} - ${maxFormatted}`;
 };
 
   useEffect(() => {
@@ -328,7 +327,7 @@ export default function Home() {
 
                       <div className="flex items-center justify-between w-full max-w-full">
                         <div className="text-3xl font-black bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent drop-shadow-lg">
-                          {formatPriceRange(product.price)}
+                              {formatPriceRange(product)}
                         </div>
                         <Button 
                           size="lg"

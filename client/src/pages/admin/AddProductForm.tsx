@@ -178,7 +178,8 @@ export default function AddProductForm() {
       const payload = {
         name: formData.get("name"),
         brand: formData.get("brand"),
-        price: formData.get("price"),
+        minPrice: Number(formData.get("minPrice")),  // ✅ NEW
+        maxPrice: Number(formData.get("maxPrice")),  // ✅ NEW
         description: formData.get("description"),
         category: selectedCategory,
         images: images.map(img => img.url)
@@ -218,7 +219,8 @@ export default function AddProductForm() {
   const formFields = [
     { name: "name", placeholder: "Product Name", icon: Package },
     { name: "brand", placeholder: "Brand", icon: Tag },
-    { name: "price", type: "number" as const, placeholder: "Price (₹)", icon: DollarSign }
+    { name: "minPrice", type: "number" as const, placeholder: "Min Price (₹)", icon: DollarSign }, // ✅ NEW
+    { name: "maxPrice", type: "number" as const, placeholder: "Max Price (₹)", icon: DollarSign }  // ✅ NEW
   ];
 
   return (

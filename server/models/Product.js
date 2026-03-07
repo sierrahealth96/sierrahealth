@@ -9,7 +9,8 @@ const productSchema = new mongoose.Schema(
       ref: "Category",
       required: true
     },
-    price: Number,
+    minPrice: { type: Number, required: true },
+    maxPrice: { type: Number, required: true },
     description: String,
     images: [String],
     isBestSeller: { type: Boolean, default: false },
