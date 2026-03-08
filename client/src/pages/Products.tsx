@@ -80,8 +80,8 @@ const formatPriceRange = (product) => {
       return matchesCategory && matchesSearch;
     })
     .sort((a, b) => {
-      if (sort === "price-asc") return a.price - b.price;
-      if (sort === "price-desc") return b.price - a.price;
+      if (sort === "price-asc") return a.minPrice - b.minPrice;
+      if (sort === "price-desc") return b.minPrice - a.minPrice;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
