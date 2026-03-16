@@ -15,6 +15,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ProductDetails from "@/pages/ProductDetails";
 import AdminPanel from "@/pages/admin/AdminPanel";
+import { HelmetProvider } from 'react-helmet-async'
 
 
 
@@ -38,15 +39,17 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CartProvider>
-          <Router />
-          <CartDrawer />
-          <Toaster />
-        </CartProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+     <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <CartProvider>
+            <Router />
+            <CartDrawer />
+            <Toaster />
+          </CartProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

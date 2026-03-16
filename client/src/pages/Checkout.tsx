@@ -11,6 +11,46 @@ import { Loader2, Truck, ShieldCheck, Clock, Package, ArrowRight, Mail } from "l
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { BASE_URL } from "@/Url";
+import { SEO } from "@/components/SEO";
+
+// ✅ Checkout Page SEO - Transactional Intent
+const checkoutSEO = {
+  title: "Request Quote - Ophthalmic Equipment Checkout | Sierra Health",
+  description: "Complete your ophthalmic equipment quote request. Get formal pricing for Topcon OCT, slit lamps, auto refractometers within 24 hours. Secure checkout, pan-India delivery.",
+  keywords: [
+    "buy ophthalmic equipment online",
+    "Topcon OCT buy online",
+    "slit lamp purchase India",
+    "medical equipment quote",
+    "ophthalmic equipment checkout",
+    "Topcon equipment order form",
+    "eye hospital equipment purchase"
+  ],
+  structuredData: {
+    "@context": "https://schema.org",
+    "@type": "OrderPage",
+    "name": "Ophthalmic Equipment Quote Request",
+    "description": "Secure checkout for premium ophthalmic equipment",
+    "provider": {
+      "@type": "MedicalEquipmentSupplier",
+      "name": "Sierra Health"
+    },
+    "potentialAction": {
+      "@type": "OrderAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://sierrahealth.in/checkout"
+      },
+      "name": "Request Quote"
+    },
+    "offers": {
+      "@type": "OfferCatalog",
+      "name": "Ophthalmic Equipment Quotes",
+      "numberOfItems": 50
+    }
+  }
+};
+
 
 const ORDER_API = `${BASE_URL}/api/orders/create`;
 
@@ -99,6 +139,8 @@ export default function Checkout() {
   }
 
   return (
+    <>
+      <SEO {...checkoutSEO} />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <Navbar />
 
@@ -301,5 +343,6 @@ export default function Checkout() {
         </div>
       </motion.section>
     </div>
+    </>
   );
 }

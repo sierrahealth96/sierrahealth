@@ -27,6 +27,59 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "wouter";
 import { BASE_URL } from "@/Url";
+import { SEO } from "@/components/SEO";
+
+
+const productsSEO = {
+    title: "Ophthalmic Equipment Catalog - Topcon OCT, Slit Lamps | Sierra Health",
+    description: "Buy Topcon OCT Maestro2, Slit Lamps SL-D701, Auto Refractometers KR-800, Optical Biometers. Best prices for eye clinics & hospitals in India. Free demo available.",
+    keywords: [
+      "Topcon OCT price India",
+      "slit lamp price",
+      "auto refractometer price",
+      "optical biometer India", 
+      "Topcon KR-800 price",
+      "Topcon SL-D701",
+      "OCT Maestro2 buy India",
+      "ophthalmic equipment Kolkata",
+      "eye diagnostic machine price",
+      "perimeter Topcon price"
+    ],
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "ProductCollection",
+      "name": "Sierra Health Ophthalmic Equipment Catalog",
+      "description": "Premium diagnostic and surgical ophthalmic equipment",
+      "provider": {
+        "@type": "MedicalEquipmentSupplier",
+        "name": "Sierra Health",
+        "url": "https://sierrahealth.in"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Ophthalmic Equipment",
+        "numberOfItems": 50, // Update dynamically
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Product",
+              "name": "Topcon OCT Maestro2"
+            }
+          },
+          {
+            "@type": "Offer", 
+            "itemOffered": {
+              "@type": "Product",
+              "name": "Topcon SL-D701 Slit Lamp"
+            }
+          }
+        ]
+      }
+    }
+  };
+
+
 
 const PRODUCT_API = `${BASE_URL}/api/products/get/all`;
 const CATEGORY_API = `${BASE_URL}/api/categories/get/all`;
@@ -102,6 +155,8 @@ const formatPriceRange = (product) => {
   };
 
   return (
+    <>
+     <SEO {...productsSEO} />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <Navbar />
 
@@ -363,5 +418,6 @@ const formatPriceRange = (product) => {
 
       <AIAssistant />
     </div>
+    </>
   );
 }

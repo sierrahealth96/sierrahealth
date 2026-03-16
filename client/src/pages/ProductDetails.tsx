@@ -8,6 +8,9 @@ import { motion } from "framer-motion";
 import { useCart } from "@/lib/cart";
 import { useState, useEffect } from "react";
 import { BASE_URL } from "@/Url";
+import { SEO } from "@/components/SEO";
+
+
 
 const PRODUCT_DETAILS = `${BASE_URL}/api/products/get/details/`;
 const PRODUCT_BY_CATEGORY = `${BASE_URL}/api/products/get/by-category/`;
@@ -29,6 +32,14 @@ export default function ProductDetails() {
   const [reviewForm, setReviewForm] = useState({ name: "", stars: 5, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+    // ✅ DYNAMIC SEO STATE
+  const [seoData, setSeoData] = useState({
+    title: 'Loading Product Details - Sierra Health',
+    description: 'Premium ophthalmic equipment details',
+    keywords: ['ophthalmic equipment', 'Topcon India'],
+    structuredData: null
+  });
 
 
 // 🆕 CORRECTED PRICE FORMATTER - PROPER HYPHEN STYLE
@@ -67,6 +78,10 @@ const formatPriceRange = (product) => {
         
         const productData = await response.json();
         setProduct(productData);
+
+            // ✅ DYNAMIC SEO FROM API DATA
+        const dynamicSeo = generateProductSEO(productData);
+        setSeoData(dynamicSeo);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -118,6 +133,62 @@ const formatPriceRange = (product) => {
 
     fetchSimilarProducts();
   }, [product, id]);
+
+    // 🔥 DYNAMIC SEO GENERATOR FUNCTION
+  const generateProductSEO = (product) => {
+    if (!product) return seoData;
+    
+    const priceRange = formatPriceRange(product);
+    const brand = product.brand || 'Topcon';
+    const category = product.category?.name || 'Ophthalmic Equipment';
+    
+    // ✅ Generate keywords from product data
+    const keywords = [
+      `${product.name} price`,
+      `${product.name} India`,
+      `${brand} ${product.name}`,
+      `${category} price`,
+      `${product.name} buy`,
+      'Topcon equipment price',
+      'ophthalmic equipment Kolkata',
+      `${brand} distributor India`
+    ];
+
+    // ✅ Dynamic title/description
+    const title = `${product.name} - ${priceRange} | Sierra Health`;
+    const description = `${product.name} by ${brand}. ${product.description?.substring(0, 155)}... Best price in India with pan-India service.`;
+
+    // ✅ Product Schema
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "MedicalDevice",
+      "name": product.name,
+      "description": product.description,
+      "brand": {
+        "@type": "Brand",
+        "name": brand
+      },
+      "category": category,
+      "image": product.images?.[0],
+      "offers": {
+        "@type": "Offer",
+        "price": priceRange.split(' - ')[0],
+        "priceCurrency": "INR",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "MedicalEquipmentSupplier",
+          "name": "Sierra Health"
+        }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": averageRating.toFixed(1),
+        "reviewCount": totalReviews
+      }
+    };
+
+    return { title, description, keywords, structuredData };
+  };
 
   // Submit review handler
   const handleSubmitReview = async (e) => {
@@ -197,6 +268,8 @@ const formatPriceRange = (product) => {
   }
 
   return (
+    <>
+    <SEO {...seoData} />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50/50">
       <Navbar />
 
@@ -833,5 +906,6 @@ const formatPriceRange = (product) => {
         </div>
       </section>
     </div>
+    </>
   );
 }

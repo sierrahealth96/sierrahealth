@@ -21,8 +21,40 @@ import { useCart } from "@/lib/cart";
 import { products } from "@/data/products";
 import { useEffect, useState } from "react";
 import { BASE_URL } from "@/Url";
+import { SEO } from "@/components/SEO";
+
+
+
+const homeSEO = {
+    title: "Sierra Health - Premium Ophthalmic Equipment India",
+    description: "Buy Topcon OCT Maestro2, Slit Lamps SL-D701, Auto Refractometers KR-800 from Sierra Health. Best prices for eye hospitals & clinics in India.",
+    keywords: [
+      "ophthalmic equipment India",
+      "Topcon OCT India", 
+      "slit lamp price India",
+      "auto refractometer price",
+      "OCT Maestro2 price",
+      "Topcon distributor India",
+      "eye hospital equipment",
+      "medical equipment Kolkata"
+    ],
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "MedicalEquipmentSupplier",
+      "name": "Sierra Health",
+      "description": "Premium ophthalmic equipment supplier in India",
+      "url": "https://sierrahealth.in",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Howrah",
+        "addressRegion": "West Bengal",
+        "addressCountry": "IN"
+      }
+    }
+  };
 
 const TOP_SELLING_API = `${BASE_URL}/api/products/get/top-selling`;
+
 
 export default function Home() {
   const { addItem } = useCart();
@@ -75,6 +107,7 @@ const formatPriceRange = (product) => {
 
   return (
     <>
+     <SEO {...homeSEO} />
     {/* 🔧 FIXED: Global overflow protection */}
     <div className="overflow-x-hidden w-screen max-w-full h-screen">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 overflow-x-hidden w-full max-w-full">

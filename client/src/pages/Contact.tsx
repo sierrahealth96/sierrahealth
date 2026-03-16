@@ -10,6 +10,70 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { BASE_URL } from "@/Url";
+import { SEO } from "@/components/SEO";
+
+// ✅ Contact Page SEO - Local SEO Focus
+const contactSEO = {
+  title: "Contact Sierra Health - Ophthalmic Equipment Howrah | +91 98765 43210",
+  description: "Contact Topcon distributor in Howrah, West Bengal. Call +91 98765 43210 for OCT, slit lamps, auto refractometers. Free consultation, pan-India delivery from Howrah showroom.",
+  keywords: [
+    "Topcon distributor Howrah",
+    "ophthalmic equipment contact Howrah",
+    "eye equipment Kolkata phone number",
+    "Topcon service Howrah",
+    "medical equipment supplier Howrah",
+    "OCT machine contact number Kolkata",
+    "slit lamp price Howrah",
+    "Topcon showroom West Bengal"
+  ],
+  structuredData: {
+    "@context": "https://schema.org",
+    "@type": "MedicalEquipmentSupplier",
+    "name": "Sierra Health",
+    "description": "Topcon & Nidek ophthalmic equipment distributor - Howrah",
+    "url": "https://sierrahealth.in/contact",
+    "telephone": "+91-98765-43210",
+    "email": "info@visionarymedical.in",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Howrah Industrial Area",
+      "addressLocality": "Howrah",
+      "addressRegion": "West Bengal",
+      "postalCode": "711101",
+      "addressCountry": "IN"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 22.5958,
+      "longitude": 88.2636
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday", 
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "opens": "09:00",
+      "closes": "18:00"
+    },
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "telephone": "+91-98765-43210",
+        "contactType": "customer service",
+        "areaServed": "IN",
+        "availableLanguage": ["English", "Hindi", "Bengali"]
+      }
+    ],
+    "sameAs": [
+      "tel:+919876543210",
+      "mailto:info@visionarymedical.in"
+    ]
+  }
+};
 
 const ORDER_API = `${BASE_URL}/api/orders/create`;
 
@@ -114,6 +178,8 @@ export default function Contact() {
   ];
 
   return (
+    <>
+      <SEO {...contactSEO} />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <Navbar />
 
@@ -348,5 +414,6 @@ export default function Contact() {
         </div>
       </div>
     </div>
+    </>
   );
 }

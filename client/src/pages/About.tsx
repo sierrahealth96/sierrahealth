@@ -5,6 +5,69 @@ import { useEffect, useState } from "react";
 import { Eye, Truck, Package, Globe, Users, Activity, ArrowRight,MapPin,Warehouse,Plane,Leaf,TrendingUp,Zap} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { SEO } from "@/components/SEO";
+
+const aboutSEO = {
+  title: "About Sierra Health - Topcon Distributor Howrah | Ophthalmic Equipment",
+  description: "India's premier Topcon & Nidek distributor in Howrah, West Bengal. Serving 500+ eye clinics with premium ophthalmic equipment. 10+ years excellence, pan-India service.",
+  keywords: [
+    "Topcon distributor Howrah",
+    "ophthalmic equipment Kolkata",
+    "Nidek distributor India",
+    "Topcon OCT supplier West Bengal",
+    "eye equipment Howrah",
+    "medical equipment distributor Kolkata",
+    "Topcon service center India",
+    "ophthalmic equipment supplier Howrah"
+  ],
+  structuredData: {
+    "@context": "https://schema.org",
+    "@type": "MedicalEquipmentSupplier",
+    "@id": "https://sierrahealth.in/#organization",
+    "name": "Sierra Health",
+    "description": "Premium ophthalmic equipment distributor serving India",
+    "url": "https://sierrahealth.in",
+    "logo": "https://sierrahealth.in/logo.png",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Howrah Industrial Area",
+      "addressLocality": "Howrah",
+      "addressRegion": "West Bengal",
+      "postalCode": "711101",
+      "addressCountry": "IN"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+91-XXXXX-XXXXX",
+      "contactType": "customer service",
+      "areaServed": "IN"
+    },
+    "sameAs": [
+      "https://www.facebook.com/sierrahealth",
+      "https://www.instagram.com/sierrahealth"
+    ],
+    "founder": {
+      "@type": "Person",
+      "name": "Visionary Team"
+    },
+    "numberOfEmployees": "10-50",
+    "areaServed": {
+      "@type": "Country",
+      "name": "India"
+    },
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Ophthalmic Equipment",
+      "numberOfItems": 50
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "127"
+    }
+  }
+};
+
 
 const stats = [
   { value: "500+", label: "Clinics Served", icon: Users },
@@ -86,6 +149,8 @@ export default function About() {
   };
 
   return (
+    <>
+     <SEO {...aboutSEO} />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 overflow-x-hidden">
       <Navbar />
       
@@ -470,5 +535,6 @@ export default function About() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
